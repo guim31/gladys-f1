@@ -10,6 +10,8 @@ the notes of the version's GitHub Release.
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-10-15
+
 ### Added
 
 - A "Formula 1" device for the dashboard and scene conditions: next Grand Prix, circuit and country,
@@ -28,4 +30,5 @@ the notes of the version's GitHub Release.
 - Data from Jolpica-F1, with a cache in `/data`: no account, a few requests a day.
 - Texts and documentation in English, French, German and Spanish.
 
-[Unreleased]: https://github.com/guim31/gladys-f1/commits/main
+[Unreleased]: https://github.com/guim31/gladys-f1/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/guim31/gladys-f1/releases/tag/v1.0.0
