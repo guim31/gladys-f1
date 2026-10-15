@@ -16,8 +16,8 @@ its only runtime dependency. It started from the official JavaScript template.
 ```bash
 npm install
 npm test                                  # node --test, the built-in runner
-node --test test/devices.test.js          # one file
-node --test --test-name-pattern "plug"    # tests whose name matches
+node --test test/service.test.js          # one file
+node --test --test-name-pattern "widget"  # tests whose name matches
 npm run lint                              # ESLint
 npm run format:check                      # Prettier, as the CI runs it
 npm run format                            # Prettier, fix in place
@@ -31,16 +31,22 @@ pushing.
 ## Architecture
 
 ```
-index.js                          SDK wiring only: handlers registered before connect()
-src/devices/index.js              registry of the device blueprints + dispatch helpers
-src/devices/<type>.js             one device type per file (buildDevice, onPoll, onSetValue...)
+index.js                          SDK wiring only: src/app.js registers the handlers before connect()
+src/app.js                        every SDK handler -> the service, the "check" action report
+src/service.js                    F1Service: the minute clock, readings + cache, states, triggers, status
+src/jolpica.js                    Jolpica-F1 client (spaced requests) and parsers of the 4 documents
+src/season.js                     pure functions of (data, now): next race/session, favorites, countries
+src/device.js                     the "Formula 1" device: FEATURES (keys forever) and buildStates
+src/widgets.js                    dashboard widget "Formula 1", key "f1" (manifest `widgets`)
 src/scenes.js                     scene action handlers (manifest `scene_actions`)
-src/widgets.js                    dashboard widget handlers (manifest `widgets`)
+src/i18n.js                       every text of the code, in en/fr/de/es
+src/time.js                       instants in the time zone of Gladys (TZ)
 src/config.js                     DEFAULT_CONFIG (mirrors the manifest defaults) + normalization
-src/weather.js                    example driver (Open-Meteo)
+src/store.js, src/failures.js     JSON files in /data; repeated failures logged once
 gladys-assistant-integration.json manifest: name, config_schema, actions, image...
-docs/en.md, docs/fr.md            user documentation, re-hosted by Gladys (mandatory)
+docs/{en,fr,de,es}.md             user documentation, re-hosted by Gladys (en and fr mandatory)
 test/                             node --test, against the SDK's fake Gladys (integration-sdk/testing)
+test/helpers/world.js             the integration on a test clock, Jolpica-F1 replayed from fixtures
 .github/scripts/release.mjs       release helpers (manifest bump, changelog), tested in test/
 ```
 
@@ -70,8 +76,9 @@ test/                             node --test, against the SDK's fake Gladys (in
   `type: "provider"`: 5.1.0). `test/manifest.test.js` ties the manifest to the
   code (defaults, action, scene and widget handlers): change both sides
   together.
-- **User-facing text** is bilingual (English and French): action messages,
-  manifest texts, and `docs/en.md` / `docs/fr.md`, kept in sync.
+- **User-facing text** exists in English, French, German and Spanish: action
+  messages, manifest texts, widget content, feature names, and the four
+  `docs/*.md`, kept in sync (`test/i18n.test.js`).
 - **Style.** Prettier formats, ESLint catches mistakes. Comments explain why,
   in English. Tests never touch the network.
 
@@ -233,3 +240,30 @@ long, et sur un « Sie »/« Ihr… » de politesse en allemand. Le store exige 
 - Docs `en`, `fr`, `de`, `es` avec les mêmes sections.
 - Chauffe, ouverture, sécurité : ne rien rendre pilotable « comme un thermostat » ou par un assistant
   vocal quand une erreur serait dangereuse (leçon d'OctoPrint).
+
+## Formule 1 (propre à ce dépôt)
+
+- **Source** : Jolpica-F1 (`https://api.jolpi.ca/ergast/f1`), API Ergast reprise, sans compte. Limites
+  anonymes publiées : 4 requêtes/s, 500/h (elles « baisseront » avec l'arrivée des jetons). Quatre
+  documents `current` seulement (calendrier, `last/results`, deux classements) : calendrier 1×/jour,
+  le reste toutes les 6 h, et toutes les 10 min entre 90 min et 48 h après le départ d'une course tant
+  que la manche n'est pas publiée. Requêtes espacées de 400 ms, nouvel essai 10 min après un échec.
+- **OpenF1 n'est pas utilisé** : ses données de séance sont gratuites seulement 30 min après la fin
+  de la séance (le direct est payant, 9,90 €/mois au 15/10/2026). Drapeau rouge et voiture de sécurité
+  ne sont donc pas fiables gratuitement : pas de déclencheur (consigne du brief : « sinon non »).
+- **Réponses réelles** : un pilote non classé a un `position` numérique mais un `positionText` en
+  lettre (R, D, W, N) ; une séance peut n'avoir qu'une date (heure non annoncée) : `timed: false`, aucun
+  déclencheur ; `SprintShootout` est l'ancien nom (2023) de `SprintQualifying`. `current` devrait
+  basculer sur la nouvelle saison en début d'année (non vérifié), avant toute course : résultats et classements vides → `null`.
+- **Déclencheur « séance qui commence »** : un événement par (séance, avance) parmi `LEAD_MINUTES`,
+  filtres `session` (`multi_select`) et `minutes_before` (`select` **obligatoire** : vide, il
+  correspondrait à toutes les avances). Le cœur convertit le nombre de l'événement en chaîne pour un
+  filtre `select`. Le dernier instant vérifié est stocké dans `/data/triggers.json` à chaque tir :
+  un redémarrage ne retire rien et rattrape 10 min au plus (rien à la première installation). Un
+  événement refusé par Gladys est retenté au tick suivant, dans la même limite de 10 min.
+- **« Course terminée »** : tiré quand `last/results` change de manche, jamais pour
+  une course antérieure à l'installation (`installedAt`, dans `triggers.json`) ni de plus de
+  3 jours. Une réponse plus ancienne que celle en cache (CDN) est ignorée.
+- Une course reste « la prochaine » 3 h après son départ (`RACE_DURATION_MS`).
+- Widget : 8 composants au plus avec titre, 4 tuiles (compte à rebours, manche, deux favoris), statut
+  des séances, top 5, podium en texte : le budget est plein, ne rien ajouter sans retirer.

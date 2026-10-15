@@ -1,41 +1,87 @@
 // -----------------------------------------------------------------------------
-// Scene actions (SDK v0.14+, Gladys 5.1+).
-//
-// A scene action is an OPERATION a scene author places in a scene, with
-// parameters and a result: "identify this device", "take a snapshot", "clean
-// these rooms". Each one is declared in the manifest `scene_actions` field
-// (key, label, `fields` in the config_schema grammar, scalar `outputs`) and
-// handled here, keyed by that same `key`; index.js registers every entry with
-// `gladys.onSceneAction(key, ...)`.
-//
-// Scene TRIGGERS are the other direction ("this happened"): they are fired by
-// the device that observes the event, see src/devices/motionSensor.js.
-//
-// The rules that matter:
-//   - `fields` arrive RESOLVED: scene variables substituted, defaults applied,
-//     validated by the core; a `"source": "devices"` field is the chosen
-//     device external_id;
-//   - resolve an object of the declared `outputs` (scalars only), readable by
-//     the following actions of the scene, or `undefined` for none. Keys not
-//     declared in the manifest are dropped by the core;
-//   - throwing fails THIS action only: the scene logs it and continues. A
-//     scene action is never a condition: return an output and let the scene
-//     author gate on it;
-//   - never fire a scene event as a consequence of a received action: a scene
-//     bound to that event would loop through the integration.
+// Scene actions (manifest `scene_actions`): sentences ready to send in a
+// message or to say aloud ({{<column>.<row>.sentence}}), in the language of
+// the configuration (a scene action does not get the user's language), and a
+// few values for conditions.
 // -----------------------------------------------------------------------------
 
-import { createLogger } from '@gladysassistant/integration-sdk';
-import { signalDevice } from './devices/index.js';
+import { SENTENCES } from './i18n.js';
+import { countryName, hasCalendar, nextRace, raceRunning, sessionOf } from './season.js';
+import { daysBetween, formatDay, formatTime, localDate } from './time.js';
 
-const logger = createLogger({ name: 'scenes' });
+export const STANDINGS_KINDS = ['drivers', 'constructors'];
+export const DEFAULT_COUNT = 3;
+export const MAX_COUNT = 10;
+
+/** The next Grand Prix as words, and its main values. */
+export function nextRaceSummary(service, language = service.config.language) {
+  const now = service.now();
+  const { timeZone } = service;
+  const sentences = SENTENCES[language];
+  const schedule = service.data.schedule;
+  if (!hasCalendar(schedule)) {
+    return { sentence: sentences.noData, race: null, days: -1, start: '' };
+  }
+  const race = nextRace(schedule, now);
+  if (!race) {
+    return { sentence: sentences.seasonOver(schedule.season), race: null, days: -1, start: '' };
+  }
+  const session = sessionOf(race, 'race');
+  const days = Math.max(0, daysBetween(localDate(now, timeZone), localDate(race.start, timeZone)));
+  const day = formatDay(race.start, language, timeZone, 'long');
+  const time = session.timed ? formatTime(race.start, language, timeZone) : '';
+  const sentence = raceRunning(race, now)
+    ? sentences.running(race.name)
+    : sentences.nextRace({
+        name: race.name,
+        round: race.round,
+        circuit: race.circuit.name,
+        locality: race.circuit.locality,
+        country: countryName(race.circuit.country, language),
+        day,
+        time,
+        days,
+      });
+  return { sentence, race, days, start: time ? `${day} ${time}` : day };
+}
+
+/** The top of a championship as words, and its leader. */
+export function standingsSummary(service, kind, count, language = service.config.language) {
+  const sentences = SENTENCES[language];
+  const standings = kind === 'constructors' ? service.data.constructors : service.data.drivers;
+  if (!standings) {
+    return { sentence: sentences.noStandings, leader: '', points: 0 };
+  }
+  const rows = standings.rows.slice(0, count).map((row) => ({
+    position: row.position,
+    name: kind === 'constructors' ? row.team.name : row.driver.name,
+    points: row.points,
+  }));
+  return {
+    sentence: sentences.standings(kind, standings.round, rows),
+    leader: rows[0].name,
+    points: rows[0].points,
+  };
+}
+
+function clampCount(value) {
+  const count = Math.trunc(Number(value ?? DEFAULT_COUNT));
+  return Number.isFinite(count) && count > 0 ? Math.min(count, MAX_COUNT) : DEFAULT_COUNT;
+}
 
 export const SCENE_ACTIONS = {
-  // The ack is awaited under the action's `timeout_seconds` (15 s in the
-  // manifest), counted from the moment the scene reaches the action.
-  async identify_device(gladys, { fields, config }) {
-    logger.info(`Scene action identify_device <- ${fields.device}`);
-    const signalled = await signalDevice(gladys, fields.device, config);
-    return { signalled };
+  read_next_grand_prix: async (service) => {
+    const summary = nextRaceSummary(service);
+    return {
+      sentence: summary.sentence,
+      grand_prix: summary.race?.name ?? '',
+      race_start: summary.start,
+      days_until_race: summary.days,
+    };
+  },
+  read_standings: async (service, { fields = {} }) => {
+    const kind = STANDINGS_KINDS.includes(fields.championship) ? fields.championship : 'drivers';
+    const summary = standingsSummary(service, kind, clampCount(fields.count));
+    return { sentence: summary.sentence, leader: summary.leader, leader_points: summary.points };
   },
 };

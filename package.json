@@ -1,8 +1,8 @@
 {
-  "name": "gladys-integration-template-js",
+  "name": "gladys-f1",
   "version": "1.0.0",
   "private": true,
-  "description": "Official starter template to build an external integration for Gladys Assistant with the JavaScript SDK.",
+  "description": "Formula 1 for Gladys Assistant: next Grand Prix, sessions, standings and results from Jolpica-F1.",
   "type": "module",
   "main": "index.js",
   "scripts": {

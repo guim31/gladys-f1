@@ -1,93 +1,78 @@
+// -----------------------------------------------------------------------------
+// Scene actions: sentences ready to send, in the language of the
+// configuration, and their values.
+// -----------------------------------------------------------------------------
+
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
-import { createFakeGladys } from '@gladysassistant/integration-sdk/testing';
-import { DEVICE_BLUEPRINTS } from '../src/devices/index.js';
-import { MOTION_DETECTED_TRIGGER, motionSensor } from '../src/devices/motionSensor.js';
-import { SCENE_ACTIONS } from '../src/scenes.js';
-import { normalizeConfig } from '../src/config.js';
+import { createWorld, fakeJolpica } from './helpers/world.js';
 
-const manifest = JSON.parse(
-  await readFile(new URL('../gladys-assistant-integration.json', import.meta.url), 'utf8'),
-);
-const config = normalizeConfig();
+async function run(world, key, fields = {}) {
+  const ack = await world.gladys.fake.sceneAction(key, fields);
+  assert.equal(ack.success, true, ack.error);
+  return ack.data.outputs;
+}
 
-const declarationOf = (list, key) => manifest[list].find((entry) => entry.key === key);
-const keysOf = (list) => (list ?? []).map((entry) => entry.key);
-const deviceIdOf = (gladys, key) =>
-  DEVICE_BLUEPRINTS.find((bp) => bp.key === key).deviceExternalId(gladys);
-
-// Let the async interval callback run to completion.
-const flush = () => new Promise((resolve) => setImmediate(resolve));
-
-test('the motion sensor fires one motion_detected event per detection, none on the clear', async (t) => {
-  t.mock.timers.enable({ apis: ['setInterval', 'setTimeout'] });
-  const gladys = createFakeGladys();
-  const stopPush = motionSensor.startPush(gladys, config);
-  try {
-    t.mock.timers.tick(60_000);
-    await flush();
-    assert.equal(gladys.fake.sceneEvents.length, 1, 'one detection, one event');
-    assert.equal(gladys.fake.sceneEvents[0].key, MOTION_DETECTED_TRIGGER);
-    assert.equal(gladys.fake.states.at(-1).state, 1, 'the state is still published');
-
-    t.mock.timers.tick(10_000);
-    await flush();
-    assert.equal(gladys.fake.states.at(-1).state, 0, 'the detection is cleared');
-    assert.equal(gladys.fake.sceneEvents.length, 1, 'the clear fires no event');
-  } finally {
-    stopPush();
+test('"Read the next Grand Prix" in four languages', async (t) => {
+  const expected = {
+    en: 'Next Grand Prix: United States Grand Prix, round 18, Circuit of the Americas, Austin (United States). Race on Sunday, October 25 at 21:00, in 10 days.',
+    fr: 'Prochain Grand Prix : United States Grand Prix, manche 18, Circuit of the Americas, Austin (États-Unis). Course dimanche 25 octobre à 21:00, dans 10 jours.',
+    de: 'Nächster Grand Prix: United States Grand Prix, Lauf 18, Circuit of the Americas, Austin (Vereinigte Staaten). Rennen am Sonntag, 25. Oktober um 21:00, in 10 Tagen.',
+    es: 'Próximo Gran Premio: United States Grand Prix, ronda 18, Circuit of the Americas, Austin (Estados Unidos). Carrera el domingo, 25 de octubre a las 21:00, dentro de 10 días.',
+  };
+  for (const [language, sentence] of Object.entries(expected)) {
+    const world = await createWorld({ config: { language } });
+    t.after(() => world.app.stop());
+    const outputs = await run(world, 'read_next_grand_prix');
+    assert.equal(outputs.sentence, sentence);
+    assert.equal(outputs.grand_prix, 'United States Grand Prix');
+    assert.equal(outputs.days_until_race, 10);
   }
 });
 
-test('motion_detected data only carries keys the trigger declares', async (t) => {
-  t.mock.timers.enable({ apis: ['setInterval', 'setTimeout'] });
-  const gladys = createFakeGladys();
-  const stopPush = motionSensor.startPush(gladys, config);
-  try {
-    t.mock.timers.tick(60_000);
-    await flush();
-  } finally {
-    stopPush();
-  }
-  const [{ data }] = gladys.fake.sceneEvents;
-  const trigger = declarationOf('scene_triggers', MOTION_DETECTED_TRIGGER);
-  // The core keeps the `fields` keys (filters) and the `variables` keys
-  // (exposed to the scene): any other key would be silently dropped.
-  const declared = [...keysOf(trigger.fields), ...keysOf(trigger.variables)];
-  for (const [key, value] of Object.entries(data)) {
-    assert.ok(declared.includes(key), `data.${key} is not declared, the core would drop it`);
-    assert.ok(value === null || typeof value !== 'object', `data.${key} must be a primitive`);
-  }
-  // A `"source": "devices"` filter stores a device external_id.
-  assert.equal(data.device, deviceIdOf(gladys, 'motion-sensor'));
-  const targets = trigger.fields.find((field) => field.key === 'target').options;
-  assert.ok(
-    targets.some((option) => option.value === data.target),
-    `data.target "${data.target}" must be one of the filter options`,
+test('race day, race running, season over, no data', async (t) => {
+  const world = await createWorld({ at: '2026-10-24T22:30:00Z' });
+  t.after(() => world.app.stop());
+  // 00:30 in Paris on race day.
+  assert.match(
+    (await run(world, 'read_next_grand_prix')).sentence,
+    /Course aujourd'hui à 21:00\.$/,
+  );
+  world.clock.set('2026-10-25T20:30:00Z');
+  assert.equal(
+    (await run(world, 'read_next_grand_prix')).sentence,
+    'Le United States Grand Prix est en cours.',
+  );
+  world.clock.set('2026-12-20T10:00:00Z');
+  const over = await run(world, 'read_next_grand_prix');
+  assert.deepEqual(over, {
+    sentence: 'La saison 2026 est terminée.',
+    grand_prix: '',
+    race_start: '',
+    days_until_race: -1,
+  });
+  const empty = await createWorld({ api: fakeJolpica({ fail: true }) });
+  t.after(() => empty.app.stop());
+  assert.equal(
+    (await run(empty, 'read_standings')).sentence,
+    "Le championnat n'a pas encore commencé.",
   );
 });
 
-test('identify_device signals the chosen device and returns the declared outputs', async () => {
-  const gladys = createFakeGladys();
-  const outputs = await SCENE_ACTIONS.identify_device(gladys, {
-    fields: { device: deviceIdOf(gladys, 'light') },
-    config,
+test('"Read the standings": drivers by default, constructors, count clamped', async (t) => {
+  const world = await createWorld({ config: { language: 'en' } });
+  t.after(() => world.app.stop());
+  assert.deepEqual(await run(world, 'read_standings'), {
+    sentence:
+      "Drivers' championship after round 17: 1. Andrea Kimi Antonelli, 340 points; 2. George Russell, 238 points; 3. Lewis Hamilton, 229 points.",
+    leader: 'Andrea Kimi Antonelli',
+    leader_points: 340,
   });
-  assert.deepEqual(outputs, { signalled: true });
-  const declared = keysOf(declarationOf('scene_actions', 'identify_device').outputs);
-  for (const key of Object.keys(outputs)) {
-    assert.ok(declared.includes(key), `output "${key}" is not declared, the core would drop it`);
-  }
-});
-
-test('identify_device reports a device that cannot signal itself through its output', async () => {
-  // Not a failure: a scene action is never a condition, the scene author
-  // gates the following actions on the output instead.
-  const gladys = createFakeGladys();
-  const outputs = await SCENE_ACTIONS.identify_device(gladys, {
-    fields: { device: deviceIdOf(gladys, 'weather-station') },
-    config,
-  });
-  assert.deepEqual(outputs, { signalled: false });
+  const teams = await run(world, 'read_standings', { championship: 'constructors', count: 1 });
+  assert.equal(
+    teams.sentence,
+    "Constructors' championship after round 17: 1. Mercedes, 578 points.",
+  );
+  const many = await run(world, 'read_standings', { count: 50 });
+  assert.equal(many.sentence.split('; ').length, 10);
 });

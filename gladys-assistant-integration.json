@@ -1,177 +1,703 @@
 {
   "manifest_version": 1,
   "type": "device",
-  "name": "Demo Devices Template",
+  "name": "Formula 1",
   "description": {
-    "en": "Starter template showing sensors, a switch, a dimmable light and a smart plug.",
-    "fr": "Template de démarrage : capteurs, interrupteur, lampe variable et prise connectée."
+    "en": "Next Grand Prix, sessions in your local time, standings and results, for your dashboard and scenes.",
+    "fr": "Prochain Grand Prix, séances à l'heure locale, classements et résultats pour tableaux et scènes.",
+    "de": "Nächster Grand Prix, Sessions in Ortszeit, Wertungen und Ergebnisse für Dashboard und Szenen.",
+    "es": "Próximo Gran Premio, sesiones en hora local, clasificaciones y resultados para paneles y escenas."
   },
   "version": "1.0.0",
-  "docker_image": "ghcr.io/gladysassistant/integration-template-js:1.0.0",
+  "docker_image": "ghcr.io/guim31/gladys-f1:1.0.0",
   "gladys_version": ">=5.1.0",
-  "cover_image": "https://raw.githubusercontent.com/GladysAssistant/integration-template-js/master/cover.png",
-  "categories": ["lighting", "security", "environment"],
-  "transports": ["local", "cloud"],
+  "cover_image": "https://raw.githubusercontent.com/guim31/gladys-f1/main/cover.png",
+  "categories": ["services"],
+  "transports": ["cloud"],
   "config_schema": [
     {
       "key": "intro",
       "type": "section",
-      "label": { "en": "Getting started", "fr": "Pour commencer" },
+      "label": {
+        "en": "How it works",
+        "fr": "Fonctionnement",
+        "de": "So funktioniert es",
+        "es": "Funcionamiento"
+      },
       "description": {
-        "en": "The demo weather station reads real data from the free Open-Meteo API: pick the coordinates to observe. No account, no API key.",
-        "fr": "La station météo de démonstration lit de vraies données via l'API gratuite Open-Meteo : choisissez les coordonnées à observer. Pas de compte, pas de clé d'API."
+        "en": "The calendar, results and standings come from Jolpica-F1, a free open-data API: no account, no key. After saving, add the Formula 1 device in the Discover tab, then the Formula 1 widget to a dashboard.",
+        "fr": "Le calendrier, les résultats et les classements viennent de Jolpica-F1, une API de données ouvertes gratuite : pas de compte, pas de clé. Après l'enregistrement, ajoutez l'appareil Formule 1 dans l'onglet Découverte, puis le widget Formule 1 à un tableau de bord.",
+        "de": "Kalender, Ergebnisse und Wertungen kommen von Jolpica-F1, einer kostenlosen Open-Data-API: kein Konto, kein Schlüssel. Füge nach dem Speichern das Gerät Formel 1 im Tab „Entdecken“ hinzu, dann das Widget Formel 1 zu einem Dashboard.",
+        "es": "El calendario, los resultados y las clasificaciones proceden de Jolpica-F1, una API de datos abiertos gratuita: sin cuenta ni clave. Después de guardar, añada el dispositivo Fórmula 1 en la pestaña Descubrir y luego el widget Fórmula 1 a un panel."
       },
       "links": [
         {
-          "url": "https://open-meteo.com/en/docs",
-          "label": { "en": "Open-Meteo documentation", "fr": "Documentation Open-Meteo" }
+          "url": "https://github.com/guim31/gladys-f1#readme",
+          "label": {
+            "en": "Documentation",
+            "fr": "Documentation",
+            "de": "Dokumentation",
+            "es": "Documentación"
+          }
         }
       ]
     },
     {
-      "key": "latitude",
-      "type": "number",
-      "label": { "en": "Latitude", "fr": "Latitude" },
-      "description": {
-        "en": "Latitude used for the demo weather sensor.",
-        "fr": "Latitude utilisée par le capteur météo de démonstration."
-      },
-      "placeholder": { "en": "e.g. 48.8566", "fr": "ex. 48.8566" },
-      "required": true,
-      "default": 48.8566,
-      "min": -90,
-      "max": 90
-    },
-    {
-      "key": "longitude",
-      "type": "number",
-      "label": { "en": "Longitude", "fr": "Longitude" },
-      "description": {
-        "en": "Longitude used for the demo weather sensor.",
-        "fr": "Longitude utilisée par le capteur météo de démonstration."
-      },
-      "placeholder": { "en": "e.g. 2.3522", "fr": "ex. 2.3522" },
-      "required": true,
-      "default": 2.3522,
-      "min": -180,
-      "max": 180
-    },
-    {
-      "key": "unit",
+      "key": "language",
       "type": "select",
-      "label": { "en": "Temperature unit", "fr": "Unité de température" },
+      "label": {
+        "en": "Language of the texts",
+        "fr": "Langue des textes",
+        "de": "Sprache der Texte",
+        "es": "Idioma de los textos"
+      },
+      "description": {
+        "en": "Feature names, session names and the sentences of the scenes. Names are set when the device is added.",
+        "fr": "Noms des fonctionnalités, noms des séances et phrases des scènes. Les noms sont fixés à l'ajout de l'appareil.",
+        "de": "Namen der Funktionen, der Sessions und die Sätze der Szenen. Die Namen werden beim Hinzufügen des Geräts festgelegt.",
+        "es": "Nombres de las funciones, de las sesiones y frases de las escenas. Los nombres se fijan al añadir el dispositivo."
+      },
       "required": false,
-      "default": "celsius",
+      "default": "fr",
       "options": [
-        { "value": "celsius", "label": { "en": "Celsius", "fr": "Celsius" } },
-        { "value": "fahrenheit", "label": { "en": "Fahrenheit", "fr": "Fahrenheit" } }
+        {
+          "value": "en",
+          "label": {
+            "en": "English",
+            "fr": "Anglais",
+            "de": "Englisch",
+            "es": "Inglés"
+          }
+        },
+        {
+          "value": "fr",
+          "label": {
+            "en": "French",
+            "fr": "Français",
+            "de": "Französisch",
+            "es": "Francés"
+          }
+        },
+        {
+          "value": "de",
+          "label": {
+            "en": "German",
+            "fr": "Allemand",
+            "de": "Deutsch",
+            "es": "Alemán"
+          }
+        },
+        {
+          "value": "es",
+          "label": {
+            "en": "Spanish",
+            "fr": "Espagnol",
+            "de": "Spanisch",
+            "es": "Español"
+          }
+        }
       ]
     },
     {
-      "key": "poll_frequency",
-      "type": "number",
-      "label": { "en": "Refresh interval (s)", "fr": "Intervalle de rafraîchissement (s)" },
+      "key": "favorite_driver",
+      "type": "string",
+      "label": {
+        "en": "Favorite driver",
+        "fr": "Pilote favori",
+        "de": "Lieblingsfahrer",
+        "es": "Piloto favorito"
+      },
       "description": {
-        "en": "How often sensors are polled, in seconds (one minute minimum).",
-        "fr": "Fréquence d'interrogation des capteurs, en secondes (une minute minimum)."
+        "en": "Optional. Code, number or name of a driver of the season (VER, 16, Hamilton). The device then shows their position, points and last result.",
+        "fr": "Facultatif. Code, numéro ou nom d'un pilote de la saison (VER, 16, Hamilton). L'appareil montre alors sa position, ses points et son dernier résultat.",
+        "de": "Optional. Kürzel, Nummer oder Name eines Fahrers der Saison (VER, 16, Hamilton). Das Gerät zeigt dann Position, Punkte und letztes Ergebnis.",
+        "es": "Opcional. Código, número o nombre de un piloto de la temporada (VER, 16, Hamilton). El dispositivo muestra entonces su posición, puntos y último resultado."
+      },
+      "placeholder": {
+        "en": "e.g. VER",
+        "fr": "ex. VER",
+        "de": "z. B. VER",
+        "es": "p. ej. VER"
       },
       "required": false,
-      "default": 300,
-      "min": 60,
-      "max": 3600
+      "default": ""
+    },
+    {
+      "key": "favorite_team",
+      "type": "string",
+      "label": {
+        "en": "Favorite team",
+        "fr": "Écurie favorite",
+        "de": "Lieblingsteam",
+        "es": "Equipo favorito"
+      },
+      "description": {
+        "en": "Optional. Name of a team of the season (Ferrari, McLaren, Red Bull). The device then shows its position, points and best result in the last race.",
+        "fr": "Facultatif. Nom d'une écurie de la saison (Ferrari, McLaren, Red Bull). L'appareil montre alors sa position, ses points et son meilleur résultat à la dernière course.",
+        "de": "Optional. Name eines Teams der Saison (Ferrari, McLaren, Red Bull). Das Gerät zeigt dann Position, Punkte und bestes Ergebnis im letzten Rennen.",
+        "es": "Opcional. Nombre de un equipo de la temporada (Ferrari, McLaren, Red Bull). El dispositivo muestra entonces su posición, puntos y mejor resultado en la última carrera."
+      },
+      "placeholder": {
+        "en": "e.g. Ferrari",
+        "fr": "ex. Ferrari",
+        "de": "z. B. Ferrari",
+        "es": "p. ej. Ferrari"
+      },
+      "required": false,
+      "default": ""
     }
   ],
   "actions": [
     {
-      "key": "test_weather",
-      "label": { "en": "Test the weather provider", "fr": "Tester le fournisseur météo" },
-      "timeout_seconds": 30
-    },
-    {
-      "key": "identify",
-      "label": { "en": "Identify a device", "fr": "Identifier un appareil" },
-      "fields": [
-        {
-          "key": "device",
-          "type": "select",
-          "source": "devices",
-          "label": { "en": "Device", "fr": "Appareil" },
-          "required": true
-        }
-      ]
+      "key": "check",
+      "label": {
+        "en": "Check",
+        "fr": "Vérifier",
+        "de": "Prüfen",
+        "es": "Comprobar"
+      },
+      "description": {
+        "en": "Reads Jolpica-F1 again now and shows the season, the next Grand Prix and your favorites.",
+        "fr": "Relit Jolpica-F1 maintenant et affiche la saison, le prochain Grand Prix et vos favoris.",
+        "de": "Liest Jolpica-F1 jetzt neu und zeigt die Saison, den nächsten Grand Prix und deine Favoriten.",
+        "es": "Vuelve a leer Jolpica-F1 ahora y muestra la temporada, el próximo Gran Premio y sus favoritos."
+      },
+      "timeout_seconds": 60
     }
   ],
   "scene_triggers": [
     {
-      "key": "motion_detected",
-      "label": { "en": "Motion detected", "fr": "Mouvement détecté" },
+      "key": "session_starting",
+      "label": {
+        "en": "Session starting",
+        "fr": "Séance qui commence",
+        "de": "Session beginnt",
+        "es": "Sesión que empieza"
+      },
       "description": {
-        "en": "A demo motion sensor saw a person or an animal move.",
-        "fr": "Un détecteur de démonstration a vu bouger une personne ou un animal."
+        "en": "Fires before a session of a Grand Prix weekend (practice, qualifying, sprint, race), at the lead time chosen.",
+        "fr": "Se déclenche avant une séance d'un week-end de Grand Prix (essais, qualifications, sprint, course), à l'avance choisie.",
+        "de": "Löst vor einer Session eines Grand-Prix-Wochenendes aus (Training, Qualifying, Sprint, Rennen), mit der gewählten Vorlaufzeit.",
+        "es": "Se activa antes de una sesión de un fin de semana de Gran Premio (libres, clasificación, sprint, carrera), con la antelación elegida."
       },
       "fields": [
         {
-          "key": "device",
-          "type": "select",
-          "source": "devices",
-          "label": { "en": "Sensor", "fr": "Détecteur" }
+          "key": "session",
+          "type": "multi_select",
+          "label": {
+            "en": "Sessions",
+            "fr": "Séances",
+            "de": "Sessions",
+            "es": "Sesiones"
+          },
+          "description": {
+            "en": "Empty: every session.",
+            "fr": "Vide : toutes les séances.",
+            "de": "Leer: alle Sessions.",
+            "es": "Vacío: todas las sesiones."
+          },
+          "options": [
+            {
+              "value": "practice_1",
+              "label": {
+                "en": "Practice 1",
+                "fr": "Essais libres 1",
+                "de": "1. Freies Training",
+                "es": "Libres 1"
+              }
+            },
+            {
+              "value": "practice_2",
+              "label": {
+                "en": "Practice 2",
+                "fr": "Essais libres 2",
+                "de": "2. Freies Training",
+                "es": "Libres 2"
+              }
+            },
+            {
+              "value": "practice_3",
+              "label": {
+                "en": "Practice 3",
+                "fr": "Essais libres 3",
+                "de": "3. Freies Training",
+                "es": "Libres 3"
+              }
+            },
+            {
+              "value": "sprint_qualifying",
+              "label": {
+                "en": "Sprint Qualifying",
+                "fr": "Qualifications sprint",
+                "de": "Sprint-Qualifying",
+                "es": "Clasificación sprint"
+              }
+            },
+            {
+              "value": "sprint",
+              "label": {
+                "en": "Sprint",
+                "fr": "Sprint",
+                "de": "Sprint",
+                "es": "Sprint"
+              }
+            },
+            {
+              "value": "qualifying",
+              "label": {
+                "en": "Qualifying",
+                "fr": "Qualifications",
+                "de": "Qualifying",
+                "es": "Clasificación"
+              }
+            },
+            {
+              "value": "race",
+              "label": {
+                "en": "Race",
+                "fr": "Course",
+                "de": "Rennen",
+                "es": "Carrera"
+              }
+            }
+          ]
         },
         {
-          "key": "target",
-          "type": "multi_select",
-          "label": { "en": "What moved", "fr": "Ce qui a bougé" },
+          "key": "minutes_before",
+          "type": "select",
+          "label": {
+            "en": "When",
+            "fr": "Quand",
+            "de": "Wann",
+            "es": "Cuándo"
+          },
+          "required": true,
+          "default": "15",
           "options": [
-            { "value": "person", "label": { "en": "Person", "fr": "Personne" } },
-            { "value": "animal", "label": { "en": "Animal", "fr": "Animal" } }
+            {
+              "value": "0",
+              "label": {
+                "en": "At the start",
+                "fr": "Au départ",
+                "de": "Beim Start",
+                "es": "En la salida"
+              }
+            },
+            {
+              "value": "5",
+              "label": {
+                "en": "5 minutes before",
+                "fr": "5 minutes avant",
+                "de": "5 Minuten vorher",
+                "es": "5 minutos antes"
+              }
+            },
+            {
+              "value": "15",
+              "label": {
+                "en": "15 minutes before",
+                "fr": "15 minutes avant",
+                "de": "15 Minuten vorher",
+                "es": "15 minutos antes"
+              }
+            },
+            {
+              "value": "30",
+              "label": {
+                "en": "30 minutes before",
+                "fr": "30 minutes avant",
+                "de": "30 Minuten vorher",
+                "es": "30 minutos antes"
+              }
+            },
+            {
+              "value": "60",
+              "label": {
+                "en": "1 hour before",
+                "fr": "1 heure avant",
+                "de": "1 Stunde vorher",
+                "es": "1 hora antes"
+              }
+            },
+            {
+              "value": "120",
+              "label": {
+                "en": "2 hours before",
+                "fr": "2 heures avant",
+                "de": "2 Stunden vorher",
+                "es": "2 horas antes"
+              }
+            }
           ]
         }
       ],
       "variables": [
         {
-          "key": "target",
+          "key": "session_name",
           "type": "string",
-          "label": { "en": "What moved", "fr": "Ce qui a bougé" }
+          "label": {
+            "en": "Session",
+            "fr": "Séance",
+            "de": "Session",
+            "es": "Sesión"
+          }
+        },
+        {
+          "key": "grand_prix",
+          "type": "string",
+          "label": {
+            "en": "Grand Prix",
+            "fr": "Grand Prix",
+            "de": "Grand Prix",
+            "es": "Gran Premio"
+          }
+        },
+        {
+          "key": "circuit",
+          "type": "string",
+          "label": {
+            "en": "Circuit",
+            "fr": "Circuit",
+            "de": "Strecke",
+            "es": "Circuito"
+          }
+        },
+        {
+          "key": "start_time",
+          "type": "string",
+          "label": {
+            "en": "Start time",
+            "fr": "Heure de début",
+            "de": "Startzeit",
+            "es": "Hora de inicio"
+          }
+        },
+        {
+          "key": "minutes_before",
+          "type": "number",
+          "label": {
+            "en": "Minutes before the start",
+            "fr": "Minutes avant le début",
+            "de": "Minuten bis zum Start",
+            "es": "Minutos antes del inicio"
+          }
+        },
+        {
+          "key": "round",
+          "type": "number",
+          "label": {
+            "en": "Round",
+            "fr": "Manche",
+            "de": "Lauf",
+            "es": "Ronda"
+          }
+        }
+      ]
+    },
+    {
+      "key": "race_finished",
+      "label": {
+        "en": "Race finished",
+        "fr": "Course terminée",
+        "de": "Rennen beendet",
+        "es": "Carrera terminada"
+      },
+      "description": {
+        "en": "Fires when the results of a Grand Prix are published, usually within a few hours of the chequered flag.",
+        "fr": "Se déclenche quand les résultats d'un Grand Prix sont publiés, en général quelques heures après le drapeau à damier.",
+        "de": "Löst aus, wenn die Ergebnisse eines Grand Prix veröffentlicht werden, meist einige Stunden nach der Zielflagge.",
+        "es": "Se activa cuando se publican los resultados de un Gran Premio, normalmente unas horas después de la bandera a cuadros."
+      },
+      "variables": [
+        {
+          "key": "summary",
+          "type": "string",
+          "label": {
+            "en": "Summary sentence",
+            "fr": "Phrase de résumé",
+            "de": "Zusammenfassung",
+            "es": "Frase de resumen"
+          }
+        },
+        {
+          "key": "grand_prix",
+          "type": "string",
+          "label": {
+            "en": "Grand Prix",
+            "fr": "Grand Prix",
+            "de": "Grand Prix",
+            "es": "Gran Premio"
+          }
+        },
+        {
+          "key": "winner",
+          "type": "string",
+          "label": {
+            "en": "Winner",
+            "fr": "Vainqueur",
+            "de": "Sieger",
+            "es": "Ganador"
+          }
+        },
+        {
+          "key": "winner_team",
+          "type": "string",
+          "label": {
+            "en": "Winner's team",
+            "fr": "Écurie du vainqueur",
+            "de": "Team des Siegers",
+            "es": "Equipo del ganador"
+          }
+        },
+        {
+          "key": "podium",
+          "type": "string",
+          "label": {
+            "en": "Podium",
+            "fr": "Podium",
+            "de": "Podium",
+            "es": "Podio"
+          }
+        },
+        {
+          "key": "favorite_driver_position",
+          "type": "number",
+          "label": {
+            "en": "Favorite driver's position (0: none)",
+            "fr": "Position du pilote favori (0 : aucune)",
+            "de": "Position des Lieblingsfahrers (0: keine)",
+            "es": "Posición del piloto favorito (0: ninguna)"
+          }
+        },
+        {
+          "key": "favorite_team_position",
+          "type": "number",
+          "label": {
+            "en": "Favorite team's best position (0: none)",
+            "fr": "Meilleure position de l'écurie favorite (0 : aucune)",
+            "de": "Beste Position des Lieblingsteams (0: keine)",
+            "es": "Mejor posición del equipo favorito (0: ninguna)"
+          }
+        },
+        {
+          "key": "round",
+          "type": "number",
+          "label": {
+            "en": "Round",
+            "fr": "Manche",
+            "de": "Lauf",
+            "es": "Ronda"
+          }
         }
       ]
     }
   ],
   "scene_actions": [
     {
-      "key": "identify_device",
-      "label": { "en": "Identify a device", "fr": "Identifier un appareil" },
-      "description": {
-        "en": "Make a device signal itself (the demo light blinks).",
-        "fr": "Fait se signaler un appareil (la lampe de démonstration clignote)."
+      "key": "read_next_grand_prix",
+      "label": {
+        "en": "Read the next Grand Prix",
+        "fr": "Lire le prochain Grand Prix",
+        "de": "Nächsten Grand Prix lesen",
+        "es": "Leer el próximo Gran Premio"
       },
-      "timeout_seconds": 15,
+      "description": {
+        "en": "A sentence ready to send: name, circuit, date and time of the race in your local time.",
+        "fr": "Une phrase prête à envoyer : nom, circuit, date et heure de la course à l'heure locale.",
+        "de": "Ein fertiger Satz zum Senden: Name, Strecke, Datum und Uhrzeit des Rennens in Ortszeit.",
+        "es": "Una frase lista para enviar: nombre, circuito, fecha y hora de la carrera en hora local."
+      },
+      "timeout_seconds": 10,
+      "outputs": [
+        {
+          "key": "sentence",
+          "type": "string",
+          "label": {
+            "en": "Sentence",
+            "fr": "Phrase",
+            "de": "Satz",
+            "es": "Frase"
+          }
+        },
+        {
+          "key": "grand_prix",
+          "type": "string",
+          "label": {
+            "en": "Grand Prix",
+            "fr": "Grand Prix",
+            "de": "Grand Prix",
+            "es": "Gran Premio"
+          }
+        },
+        {
+          "key": "race_start",
+          "type": "string",
+          "label": {
+            "en": "Race start",
+            "fr": "Départ de la course",
+            "de": "Rennstart",
+            "es": "Salida de la carrera"
+          }
+        },
+        {
+          "key": "days_until_race",
+          "type": "number",
+          "label": {
+            "en": "Days until the race (-1: none)",
+            "fr": "Jours avant la course (-1 : aucune)",
+            "de": "Tage bis zum Rennen (-1: keins)",
+            "es": "Días hasta la carrera (-1: ninguna)"
+          }
+        }
+      ]
+    },
+    {
+      "key": "read_standings",
+      "label": {
+        "en": "Read the standings",
+        "fr": "Lire le classement",
+        "de": "Wertung lesen",
+        "es": "Leer la clasificación"
+      },
+      "description": {
+        "en": "A sentence ready to send with the top of the drivers' or constructors' championship.",
+        "fr": "Une phrase prête à envoyer avec le haut du classement pilotes ou constructeurs.",
+        "de": "Ein fertiger Satz zum Senden mit der Spitze der Fahrer- oder Konstrukteurswertung.",
+        "es": "Una frase lista para enviar con la cabeza del campeonato de pilotos o de constructores."
+      },
+      "timeout_seconds": 10,
       "fields": [
         {
-          "key": "device",
+          "key": "championship",
           "type": "select",
-          "source": "devices",
-          "label": { "en": "Device", "fr": "Appareil" },
-          "required": true
+          "label": {
+            "en": "Championship",
+            "fr": "Championnat",
+            "de": "Meisterschaft",
+            "es": "Campeonato"
+          },
+          "required": false,
+          "default": "drivers",
+          "options": [
+            {
+              "value": "drivers",
+              "label": {
+                "en": "Drivers",
+                "fr": "Pilotes",
+                "de": "Fahrer",
+                "es": "Pilotos"
+              }
+            },
+            {
+              "value": "constructors",
+              "label": {
+                "en": "Constructors",
+                "fr": "Constructeurs",
+                "de": "Konstrukteure",
+                "es": "Constructores"
+              }
+            }
+          ]
+        },
+        {
+          "key": "count",
+          "type": "number",
+          "label": {
+            "en": "Positions read (1 to 10)",
+            "fr": "Places lues (1 à 10)",
+            "de": "Gelesene Plätze (1 bis 10)",
+            "es": "Puestos leídos (1 a 10)"
+          },
+          "required": false,
+          "default": 3,
+          "min": 1,
+          "max": 10
         }
       ],
       "outputs": [
         {
-          "key": "signalled",
-          "type": "boolean",
-          "label": { "en": "Device signalled", "fr": "Appareil signalé" }
+          "key": "sentence",
+          "type": "string",
+          "label": {
+            "en": "Sentence",
+            "fr": "Phrase",
+            "de": "Satz",
+            "es": "Frase"
+          }
+        },
+        {
+          "key": "leader",
+          "type": "string",
+          "label": {
+            "en": "Leader",
+            "fr": "Leader",
+            "de": "Spitzenreiter",
+            "es": "Líder"
+          }
+        },
+        {
+          "key": "leader_points",
+          "type": "number",
+          "label": {
+            "en": "Leader's points",
+            "fr": "Points du leader",
+            "de": "Punkte des Spitzenreiters",
+            "es": "Puntos del líder"
+          }
         }
       ]
     }
   ],
   "widgets": [
     {
-      "key": "demo_status",
-      "label": { "en": "Demo status", "fr": "État de la démo" },
-      "description": {
-        "en": "Live temperature and plug power, plug connection and observed location.",
-        "fr": "Température et puissance en direct, connexion de la prise, position observée."
+      "key": "f1",
+      "label": {
+        "en": "Formula 1",
+        "fr": "Formule 1",
+        "de": "Formel 1",
+        "es": "Fórmula 1"
       },
-      "icon": "activity",
-      "action_timeout_seconds": 15
+      "description": {
+        "en": "Next Grand Prix with countdown and sessions, top 5 of the championship, last podium.",
+        "fr": "Prochain GP avec compte à rebours et séances, top 5 du championnat, dernier podium.",
+        "de": "Nächster GP mit Countdown und Sessions, Top 5 der Wertung, letztes Podium.",
+        "es": "Próximo GP con cuenta atrás y sesiones, top 5 del campeonato, último podio."
+      },
+      "icon": "flag",
+      "settings": [
+        {
+          "key": "championship",
+          "type": "select",
+          "label": {
+            "en": "Championship shown",
+            "fr": "Championnat affiché",
+            "de": "Angezeigte Wertung",
+            "es": "Campeonato mostrado"
+          },
+          "required": false,
+          "default": "drivers",
+          "options": [
+            {
+              "value": "drivers",
+              "label": {
+                "en": "Drivers",
+                "fr": "Pilotes",
+                "de": "Fahrer",
+                "es": "Pilotos"
+              }
+            },
+            {
+              "value": "constructors",
+              "label": {
+                "en": "Constructors",
+                "fr": "Constructeurs",
+                "de": "Konstrukteure",
+                "es": "Constructores"
+              }
+            }
+          ]
+        }
+      ]
     }
   ]
 }
