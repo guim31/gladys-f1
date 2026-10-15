@@ -103,8 +103,9 @@ favorite team (0: not classified or not chosen).
   status of the integration: it says when Jolpica-F1 cannot be reached.
 - **"Favorite driver not found"**: use **Check**, which lists the drivers and teams of the season with
   their codes.
-- **A trigger did not fire**: a session whose time is not announced yet fires nothing; a restart of Gladys
-  or of the integration longer than 10 minutes loses the triggers of that time.
+- **A trigger did not fire**: a session whose time is not announced yet fires nothing; a trigger missed
+  while Gladys or the integration is unavailable is sent late for 10 minutes at most, then lost. Right
+  after the installation, nothing is caught up.
 - **The results come late**: Jolpica-F1 is maintained by volunteers; results are usually published within
   a few hours, sometimes the next day. The integration keeps checking for 48 hours after a race.
 
@@ -119,6 +120,10 @@ favorite team (0: not classified or not chosen).
   are published. The answers are kept in a cache in the integration's data folder: the device and the
   widget keep working when the API is down.
 - Names (Grand Prix, circuits, drivers, teams) are in English, as Jolpica-F1 publishes them.
+- After the last race of the season, "Next Grand Prix" and "Next session" say the season is over, while
+  the other features of the next race keep the values of the last Grand Prix until the next calendar.
+- A session whose time is not announced yet is placed at noon UTC: far from Europe, its day may be off
+  by one until the time is published.
 
 ## Data and credits
 

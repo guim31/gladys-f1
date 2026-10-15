@@ -309,3 +309,15 @@ test('the guard catches a missing language, an empty text and the polite German 
     'manifest.scene_actions[1].fields[0].label has [en,fr,es], expected exactly [en,fr,de,es]',
   ]);
 });
+
+test('points are counted in words: singular, plural, half points', async () => {
+  const { points } = await import('../src/i18n.js');
+  assert.deepEqual(
+    [points('en', 1), points('en', 0.5), points('fr', 1), points('fr', 0.5), points('fr', 25)],
+    ['1 point', '0.5 points', '1 point', '0,5 point', '25 points'],
+  );
+  assert.deepEqual(
+    [points('de', 1), points('de', 18, { dative: true }), points('es', 1), points('es', 2.5)],
+    ['1 Punkt', '18 Punkten', '1 punto', '2,5 puntos'],
+  );
+});

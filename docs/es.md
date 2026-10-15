@@ -110,7 +110,8 @@ equipo favorito (0: no clasificado o no elegido).
 - **«Piloto favorito no encontrado»**: use **Comprobar**, que lista los pilotos y equipos de la temporada
   con sus códigos.
 - **Un disparador no se ha activado**: una sesión cuya hora aún no se ha anunciado no activa nada; un
-  reinicio de Gladys o de la integración de más de 10 minutos pierde los disparadores de ese momento.
+  disparador perdido mientras Gladys o la integración no están disponibles se envía con retraso durante
+  10 minutos como máximo y luego se pierde. Justo después de la instalación no se recupera nada.
 - **Los resultados llegan tarde**: Jolpica-F1 lo mantienen voluntarios; los resultados suelen publicarse
   en pocas horas, a veces al día siguiente. La integración sigue comprobando durante 48 horas después de
   una carrera.
@@ -127,6 +128,11 @@ equipo favorito (0: no clasificado o no elegido).
   integración: el dispositivo y el widget siguen funcionando cuando la API no responde.
 - Los nombres (Grandes Premios, circuitos, pilotos, equipos) están en inglés, tal como los publica
   Jolpica-F1.
+- Tras la última carrera de la temporada, «Próximo Gran Premio» y «Próxima sesión» indican el final de la
+  temporada, pero las demás funciones de la próxima carrera conservan los valores del último Gran Premio
+  hasta el calendario siguiente.
+- Una sesión cuya hora aún no se ha anunciado se sitúa a mediodía UTC: lejos de Europa, su día puede
+  diferir en uno hasta que se publique la hora.
 
 ## Datos y créditos
 

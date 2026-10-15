@@ -259,9 +259,11 @@ long, et sur un « Sie »/« Ihr… » de politesse en allemand. Le store exige 
   filtres `session` (`multi_select`) et `minutes_before` (`select` **obligatoire** : vide, il
   correspondrait à toutes les avances). Le cœur convertit le nombre de l'événement en chaîne pour un
   filtre `select`. Le dernier instant vérifié est stocké dans `/data/triggers.json` à chaque tir :
-  un redémarrage ne retire rien et rattrape 10 min au plus.
-- **« Course terminée »** : tiré quand `last/results` change de manche, jamais au premier démarrage
-  (aucune manche annoncée connue) ni pour une course de plus de 3 jours.
+  un redémarrage ne retire rien et rattrape 10 min au plus (rien à la première installation). Un
+  événement refusé par Gladys est retenté au tick suivant, dans la même limite de 10 min.
+- **« Course terminée »** : tiré quand `last/results` change de manche, jamais pour
+  une course antérieure à l'installation (`installedAt`, dans `triggers.json`) ni de plus de
+  3 jours. Une réponse plus ancienne que celle en cache (CDN) est ignorée.
 - Une course reste « la prochaine » 3 h après son départ (`RACE_DURATION_MS`).
 - Widget : 8 composants au plus avec titre, 4 tuiles (compte à rebours, manche, deux favoris), statut
   des séances, top 5, podium en texte : le budget est plein, ne rien ajouter sans retirer.

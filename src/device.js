@@ -8,7 +8,15 @@
 // -----------------------------------------------------------------------------
 
 import { NAMES, SESSION_NAMES, STATE_TEXT } from './i18n.js';
-import { countryName, favorites, nextRace, nextSession, raceRunning, sessionOf } from './season.js';
+import {
+  countryName,
+  favorites,
+  hasCalendar,
+  nextRace,
+  nextSession,
+  raceRunning,
+  sessionOf,
+} from './season.js';
 import { daysBetween, formatStart, localDate } from './time.js';
 
 const TEXT = { category: 'text', type: 'text', min: 0, max: 0 };
@@ -121,7 +129,7 @@ export function buildStates(gladys, config, data, { now, timeZone }) {
   };
   const start = (session) => session && formatStart(session, language, timeZone);
 
-  if (data.schedule) {
+  if (hasCalendar(data.schedule)) {
     const race = nextRace(data.schedule, now);
     if (race) {
       const today = localDate(now, timeZone);

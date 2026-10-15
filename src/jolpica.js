@@ -19,7 +19,8 @@ export const PATHS = {
   constructors: '/current/constructorstandings.json',
 };
 
-const REQUEST_TIMEOUT_MS = 20_000;
+// Four requests must fit in the 60 s of the "Check" action.
+const REQUEST_TIMEOUT_MS = 10_000;
 const MIN_SPACING_MS = 400; // 4 requests per second at most, with margin
 const USER_AGENT = 'gladys-f1 (+https://github.com/guim31/gladys-f1)';
 

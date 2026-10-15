@@ -109,7 +109,8 @@ Position deines Lieblingsteams (0: nicht gewertet oder nicht gewählt).
 - **„Lieblingsfahrer nicht gefunden“**: Nutze **Prüfen**, das die Fahrer und Teams der Saison mit ihren
   Kürzeln auflistet.
 - **Ein Auslöser hat nicht ausgelöst**: Eine Session ohne angekündigte Uhrzeit löst nichts aus; ein
-  Neustart von Gladys oder der Integration von mehr als 10 Minuten verliert die Auslöser dieser Zeit.
+  Auslöser, der verpasst wird, während Gladys oder die Integration nicht verfügbar ist, wird höchstens
+  10 Minuten lang nachgeholt und geht dann verloren. Direkt nach der Installation wird nichts nachgeholt.
 - **Die Ergebnisse kommen spät**: Jolpica-F1 wird von Freiwilligen betrieben; die Ergebnisse erscheinen
   meist innerhalb weniger Stunden, manchmal am nächsten Tag. Die Integration prüft nach einem Rennen
   48 Stunden lang weiter.
@@ -125,6 +126,11 @@ Position deines Lieblingsteams (0: nicht gewertet oder nicht gewählt).
   10 Minuten bis zu ihrer Veröffentlichung. Die Antworten werden im Datenordner der Integration
   zwischengespeichert: Gerät und Widget funktionieren weiter, wenn die API ausfällt.
 - Die Namen (Grands Prix, Strecken, Fahrer, Teams) sind auf Englisch, so wie Jolpica-F1 sie veröffentlicht.
+- Nach dem letzten Rennen der Saison melden „Nächster Grand Prix“ und „Nächste Session“ das Saisonende,
+  die übrigen Funktionen des nächsten Rennens behalten aber die Werte des letzten Grand Prix bis zum
+  nächsten Kalender.
+- Eine Session ohne angekündigte Uhrzeit wird auf 12:00 UTC gesetzt: Weit weg von Europa kann ihr Tag um
+  einen Tag abweichen, bis die Uhrzeit veröffentlicht ist.
 
 ## Daten und Danksagungen
 

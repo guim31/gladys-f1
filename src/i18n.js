@@ -178,6 +178,29 @@ export const STATE_TEXT = {
   },
 };
 
+const numberFormats = new Map();
+
+function number(language, n) {
+  let format = numberFormats.get(language);
+  if (!format) {
+    format = new Intl.NumberFormat(language, { maximumFractionDigits: 1 });
+    numberFormats.set(language, format);
+  }
+  return format.format(n);
+}
+
+/** "221 points", "1 point", "0,5 point" ("Punkten" after "mit" in German). */
+export function points(language, n, { dative = false } = {}) {
+  const one = language === 'fr' ? Math.abs(n) < 2 : n === 1;
+  const words = {
+    en: ['point', 'points'],
+    fr: ['point', 'points'],
+    de: ['Punkt', dative ? 'Punkten' : 'Punkte'],
+    es: ['punto', 'puntos'],
+  }[language];
+  return `${number(language, n)} ${one ? words[0] : words[1]}`;
+}
+
 /** "1st", "1er", "1.", "1.º": a finishing position in a sentence. */
 export const ORDINAL = {
   en: (n) => {
@@ -199,7 +222,7 @@ export const WIDGET_TEXT = {
     daysHours: (d, h) => `${d} d ${h} h`,
     hoursMinutes: (h, m) => `${h} h ${m} min`,
     now: 'Now',
-    points: (n) => `${n} pts`,
+    points: (n) => `${number('en', n)} pts`,
     lastRace: (name, podium) => `Last race, ${name}: ${podium}`,
     seasonOver: (season) => `Season ${season} over`,
     noData: 'The Formula 1 data is not available yet: try again in a few minutes.',
@@ -210,7 +233,7 @@ export const WIDGET_TEXT = {
     daysHours: (d, h) => `${d} j ${h} h`,
     hoursMinutes: (h, m) => `${h} h ${m} min`,
     now: 'En cours',
-    points: (n) => `${n} pts`,
+    points: (n) => `${number('fr', n)} pts`,
     lastRace: (name, podium) => `Dernier GP, ${name} : ${podium}`,
     seasonOver: (season) => `Saison ${season} terminée`,
     noData:
@@ -222,7 +245,7 @@ export const WIDGET_TEXT = {
     daysHours: (d, h) => `${d} T ${h} h`,
     hoursMinutes: (h, m) => `${h} h ${m} min`,
     now: 'Läuft',
-    points: (n) => `${n} Pkt.`,
+    points: (n) => `${number('de', n)} Pkt.`,
     lastRace: (name, podium) => `Letztes Rennen, ${name}: ${podium}`,
     seasonOver: (season) => `Saison ${season} beendet`,
     noData:
@@ -234,7 +257,7 @@ export const WIDGET_TEXT = {
     daysHours: (d, h) => `${d} d ${h} h`,
     hoursMinutes: (h, m) => `${h} h ${m} min`,
     now: 'En curso',
-    points: (n) => `${n} pts`,
+    points: (n) => `${number('es', n)} pts`,
     lastRace: (name, podium) => `Última carrera, ${name}: ${podium}`,
     seasonOver: (season) => `Temporada ${season} terminada`,
     noData: 'Los datos de Fórmula 1 aún no están disponibles: inténtelo de nuevo en unos minutos.',
@@ -256,7 +279,7 @@ export const SENTENCES = {
     noData: 'The Formula 1 data is not available yet.',
     standings: (kind, round, rows) =>
       `${kind === 'drivers' ? "Drivers'" : "Constructors'"} championship after round ${round}: ` +
-      `${rows.map((row) => `${row.position}. ${row.name}, ${row.points} points`).join('; ')}.`,
+      `${rows.map((row) => `${row.position}. ${row.name}, ${points('en', row.points)}`).join('; ')}.`,
     noStandings: 'The championship has not started yet.',
     raceFinished: (name, podium) =>
       `${podium[0].name} (${podium[0].team}) wins the ${name}` +
@@ -274,7 +297,7 @@ export const SENTENCES = {
     noData: 'Les données de Formule 1 ne sont pas encore disponibles.',
     standings: (kind, round, rows) =>
       `Championnat ${kind === 'drivers' ? 'pilotes' : 'constructeurs'} après la manche ${round} : ` +
-      `${rows.map((row) => `${row.position}. ${row.name}, ${row.points} points`).join(' ; ')}.`,
+      `${rows.map((row) => `${row.position}. ${row.name}, ${points('fr', row.points)}`).join(' ; ')}.`,
     noStandings: "Le championnat n'a pas encore commencé.",
     raceFinished: (name, podium) =>
       `${podium[0].name} (${podium[0].team}) remporte le ${name}` +
@@ -292,7 +315,7 @@ export const SENTENCES = {
     noData: 'Die Formel-1-Daten sind noch nicht verfügbar.',
     standings: (kind, round, rows) =>
       `${kind === 'drivers' ? 'Fahrerwertung' : 'Konstrukteurswertung'} nach Lauf ${round}: ` +
-      `${rows.map((row) => `${row.position}. ${row.name}, ${row.points} Punkte`).join('; ')}.`,
+      `${rows.map((row) => `${row.position}. ${row.name}, ${points('de', row.points)}`).join('; ')}.`,
     noStandings: 'Die Meisterschaft hat noch nicht begonnen.',
     raceFinished: (name, podium) =>
       `${podium[0].name} (${podium[0].team}) gewinnt den ${name}` +
@@ -310,7 +333,7 @@ export const SENTENCES = {
     noData: 'Los datos de Fórmula 1 aún no están disponibles.',
     standings: (kind, round, rows) =>
       `Campeonato de ${kind === 'drivers' ? 'pilotos' : 'constructores'} tras la ronda ${round}: ` +
-      `${rows.map((row) => `${row.position}. ${row.name}, ${row.points} puntos`).join('; ')}.`,
+      `${rows.map((row) => `${row.position}. ${row.name}, ${points('es', row.points)}`).join('; ')}.`,
     noStandings: 'El campeonato aún no ha empezado.',
     raceFinished: (name, podium) =>
       `${podium[0].name} (${podium[0].team}) gana el ${name}` +
@@ -334,10 +357,10 @@ export const CHECK_TEXT = {
     season: (season, rounds) => `Season ${season}: ${rounds} Grands Prix.`,
     next: (sentence) => sentence,
     last: (name, winner) => `Last race: ${name}, won by ${winner}.`,
-    driver: (name, position, points) =>
-      `Favorite driver: ${name}${position ? `, ${ORDINAL.en(position)} with ${points} points` : ''}.`,
-    team: (name, position, points) =>
-      `Favorite team: ${name}${position ? `, ${ORDINAL.en(position)} with ${points} points` : ''}.`,
+    driver: (name, position, total) =>
+      `Favorite driver: ${name}${position ? `, ${ORDINAL.en(position)} with ${points('en', total)}` : ''}.`,
+    team: (name, position, total) =>
+      `Favorite team: ${name}${position ? `, ${ORDINAL.en(position)} with ${points('en', total)}` : ''}.`,
     driverUnknown: (query, list) =>
       `Favorite driver "${query}" not found. Drivers of the season: ${list}.`,
     teamUnknown: (query, list) =>
@@ -350,10 +373,10 @@ export const CHECK_TEXT = {
     season: (season, rounds) => `Saison ${season} : ${rounds} Grands Prix.`,
     next: (sentence) => sentence,
     last: (name, winner) => `Dernière course : ${name}, gagnée par ${winner}.`,
-    driver: (name, position, points) =>
-      `Pilote favori : ${name}${position ? `, ${ORDINAL.fr(position)} avec ${points} points` : ''}.`,
-    team: (name, position, points) =>
-      `Écurie favorite : ${name}${position ? `, ${ORDINAL.fr(position)} avec ${points} points` : ''}.`,
+    driver: (name, position, total) =>
+      `Pilote favori : ${name}${position ? `, ${ORDINAL.fr(position)} avec ${points('fr', total)}` : ''}.`,
+    team: (name, position, total) =>
+      `Écurie favorite : ${name}${position ? `, ${ORDINAL.fr(position)} avec ${points('fr', total)}` : ''}.`,
     driverUnknown: (query, list) =>
       `Pilote favori « ${query} » introuvable. Pilotes de la saison : ${list}.`,
     teamUnknown: (query, list) =>
@@ -366,10 +389,10 @@ export const CHECK_TEXT = {
     season: (season, rounds) => `Saison ${season}: ${rounds} Grands Prix.`,
     next: (sentence) => sentence,
     last: (name, winner) => `Letztes Rennen: ${name}, gewonnen von ${winner}.`,
-    driver: (name, position, points) =>
-      `Lieblingsfahrer: ${name}${position ? `, ${ORDINAL.de(position)} mit ${points} Punkten` : ''}.`,
-    team: (name, position, points) =>
-      `Lieblingsteam: ${name}${position ? `, ${ORDINAL.de(position)} mit ${points} Punkten` : ''}.`,
+    driver: (name, position, total) =>
+      `Lieblingsfahrer: ${name}${position ? `, ${ORDINAL.de(position)} mit ${points('de', total, { dative: true })}` : ''}.`,
+    team: (name, position, total) =>
+      `Lieblingsteam: ${name}${position ? `, ${ORDINAL.de(position)} mit ${points('de', total, { dative: true })}` : ''}.`,
     driverUnknown: (query, list) =>
       `Lieblingsfahrer „${query}“ nicht gefunden. Fahrer der Saison: ${list}.`,
     teamUnknown: (query, list) =>
@@ -382,10 +405,10 @@ export const CHECK_TEXT = {
     season: (season, rounds) => `Temporada ${season}: ${rounds} Grandes Premios.`,
     next: (sentence) => sentence,
     last: (name, winner) => `Última carrera: ${name}, ganada por ${winner}.`,
-    driver: (name, position, points) =>
-      `Piloto favorito: ${name}${position ? `, ${ORDINAL.es(position)} con ${points} puntos` : ''}.`,
-    team: (name, position, points) =>
-      `Equipo favorito: ${name}${position ? `, ${ORDINAL.es(position)} con ${points} puntos` : ''}.`,
+    driver: (name, position, total) =>
+      `Piloto favorito: ${name}${position ? `, ${ORDINAL.es(position)} con ${points('es', total)}` : ''}.`,
+    team: (name, position, total) =>
+      `Equipo favorito: ${name}${position ? `, ${ORDINAL.es(position)} con ${points('es', total)}` : ''}.`,
     driverUnknown: (query, list) =>
       `Piloto favorito «${query}» no encontrado. Pilotos de la temporada: ${list}.`,
     teamUnknown: (query, list) =>

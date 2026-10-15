@@ -10,7 +10,7 @@ import { WIDGET_COLORS } from '@gladysassistant/integration-sdk';
 import { LANGUAGES } from './config.js';
 import { podiumText } from './device.js';
 import { SESSION_NAMES, WIDGET_TEXT } from './i18n.js';
-import { favorites, nextRace, nextSession, raceRunning } from './season.js';
+import { favorites, hasCalendar, nextRace, nextSession, raceRunning } from './season.js';
 import { WIDGET_KEY } from './service.js';
 import { STANDINGS_KINDS } from './scenes.js';
 import { formatStart } from './time.js';
@@ -50,7 +50,7 @@ export function buildContent(service, { settings = {}, language } = {}) {
   const { data, timeZone } = service;
   const components = [];
 
-  if (!data.schedule) {
+  if (!hasCalendar(data.schedule)) {
     components.push({ type: 'text', variant: 'body', text: text.noData });
     return { ttl_seconds: 300, components };
   }

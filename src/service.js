@@ -83,6 +83,7 @@ export class F1Service {
     this.lastAttempt = 0;
     this.lastCheck = 0;
     this.announced = null;
+    this.installedAt = 0;
     this.lastForce = 0;
     this.statusKey = null;
     this.widgetKey = null;
@@ -103,17 +104,24 @@ export class F1Service {
     return this.serial(async () => {
       this.config = config;
       this.loadCache();
-      const saved = this.store.load(TRIGGERS_FILE) ?? {};
-      this.announced = saved.announced ?? null;
+      const saved = this.store.load(TRIGGERS_FILE);
       const now = this.now();
-      this.lastCheck = Math.max(saved.lastCheck ?? 0, now - CATCH_UP);
+      this.announced = saved?.announced ?? null;
+      // A fresh install catches nothing up, and announces no race run before it.
+      this.installedAt = saved?.installedAt ?? (saved ? 0 : now);
+      this.lastCheck = saved ? Math.max(saved.lastCheck ?? 0, now - CATCH_UP) : now;
+      if (!saved) {
+        this.saveTriggers();
+      }
+      // The clock runs whatever happens below: a failure at start-up must not
+      // stop the readings and the triggers until the next restart.
+      this.schedule();
       await this.refresh();
       await this.publishDevice();
       await this.publishStates({ force: true });
       await this.updateStatus();
       this.refreshWidget();
       await this.fireSessionTriggers();
-      this.schedule();
     });
   }
 
@@ -256,7 +264,11 @@ export class F1Service {
     let read = 0;
     try {
       for (const key of due) {
-        this.data[key] = PARSERS[key](await this.api.get(PATHS[key]));
+        const document = PARSERS[key](await this.api.get(PATHS[key]));
+        // A stale answer (a cache around a publication) never goes back in time.
+        if (!isOlder(document, this.data[key])) {
+          this.data[key] = document;
+        }
         this.fetchedAt[key] = now;
         read += 1;
       }
@@ -281,7 +293,12 @@ export class F1Service {
   // ---------------------------------------------------------------------------
 
   async publishDevice() {
-    await this.gladys.publishDiscoveredDevices([buildDevice(this.gladys, this.config)]);
+    try {
+      await this.gladys.publishDiscoveredDevices([buildDevice(this.gladys, this.config)]);
+      this.failures.succeeded('device', 'Device published again');
+    } catch (err) {
+      this.failures.failed('device', `Could not publish the device: ${err.message}`);
+    }
   }
 
   /**
@@ -366,12 +383,15 @@ export class F1Service {
     }
   }
 
+  /** @returns {Promise<boolean>} false when Gladys refused the event */
   async fireEvent(key, data) {
     try {
       await this.gladys.publishSceneEvent(key, data);
       this.failures.succeeded('scene-event', 'Scene triggers fired again');
+      return true;
     } catch (err) {
       this.failures.failed('scene-event', `Could not fire ${key}: ${err.message}`);
+      return false;
     }
   }
 
@@ -379,6 +399,9 @@ export class F1Service {
   async fireSessionTriggers() {
     const now = this.now();
     const from = this.lastCheck;
+    if (now <= from) {
+      return; // the clock stepped back: this interval was already checked
+    }
     this.lastCheck = now;
     const language = this.config.language;
     const events = [];
@@ -411,13 +434,22 @@ export class F1Service {
     }
     events.sort((a, b) => a.at - b.at);
     for (const event of events) {
-      await this.fireEvent(TRIGGERS.SESSION_STARTING, event.data);
+      if (!(await this.fireEvent(TRIGGERS.SESSION_STARTING, event.data))) {
+        // Gladys is unavailable: try again from this event at the next tick,
+        // for 10 minutes at most.
+        this.lastCheck = Math.max(event.at - 1, now - CATCH_UP);
+        break;
+      }
     }
     this.saveTriggers();
   }
 
   saveTriggers() {
-    this.store.save(TRIGGERS_FILE, { lastCheck: this.lastCheck, announced: this.announced });
+    this.store.save(TRIGGERS_FILE, {
+      lastCheck: this.lastCheck,
+      announced: this.announced,
+      installedAt: this.installedAt,
+    });
   }
 
   /** New results: "race finished", once per race, for a race of the last days. */
@@ -430,14 +462,14 @@ export class F1Service {
     if (key === this.announced) {
       return;
     }
-    const first = this.announced === null;
     this.announced = key;
     this.saveTriggers();
     const race = this.data.schedule?.races.find(
       (entry) => entry.season === results.season && entry.round === results.round,
     );
     const start = race?.start ?? Date.parse(`${results.date}T12:00:00Z`);
-    if (first || now - start > ANNOUNCE_WITHIN) {
+    // Not a race run before the install, nor an old one.
+    if (start < this.installedAt || now - start > ANNOUNCE_WITHIN) {
       return;
     }
     await this.fireEvent(TRIGGERS.RACE_FINISHED, this.raceFinishedData());
@@ -466,4 +498,15 @@ export class F1Service {
       summary,
     };
   }
+}
+
+/** True when a document is of an earlier round than the one held. */
+function isOlder(document, held) {
+  if (!document || !held || document.round === undefined || held.round === undefined) {
+    return false;
+  }
+  return (
+    document.season < held.season ||
+    (document.season === held.season && document.round < held.round)
+  );
 }

@@ -45,10 +45,11 @@ test('the device is never polled: its own timer fires the triggers', async (t) =
     t.mock.timers.tick(60_000);
     await flush();
   }
-  // 5 minutes before: caught up at start; at the start: fired by the timer.
+  // A fresh install catches nothing up (5 minutes before has passed); the
+  // timer fires the start.
   assert.deepEqual(
     world.gladys.fake.sceneEvents.map((event) => event.data.minutes_before),
-    [5, 0],
+    [0],
   );
   assert.equal(world.state('next_session'), 'Course · en cours');
 });

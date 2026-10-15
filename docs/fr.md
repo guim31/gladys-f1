@@ -110,8 +110,8 @@ de votre écurie favorite (0 : non classé ou non choisi).
 - **« Pilote favori introuvable »** : utilisez **Vérifier**, qui liste les pilotes et les écuries de la
   saison avec leurs codes.
 - **Un déclencheur ne s'est pas lancé** : une séance dont l'heure n'est pas encore annoncée ne déclenche
-  rien ; un redémarrage de Gladys ou de l'intégration de plus de 10 minutes perd les déclencheurs de ce
-  moment-là.
+  rien ; un déclencheur manqué pendant une indisponibilité de Gladys ou de l'intégration est envoyé en
+  retard pendant 10 minutes au plus, puis perdu. Juste après l'installation, rien n'est rattrapé.
 - **Les résultats arrivent tard** : Jolpica-F1 est maintenu par des bénévoles ; les résultats sont en
   général publiés en quelques heures, parfois le lendemain. L'intégration continue de vérifier pendant
   48 heures après une course.
@@ -127,6 +127,11 @@ de votre écurie favorite (0 : non classé ou non choisi).
   10 minutes après une course jusqu'à leur publication. Les réponses sont gardées en cache dans le dossier
   de données de l'intégration : l'appareil et le widget continuent de fonctionner quand l'API est en panne.
 - Les noms (Grands Prix, circuits, pilotes, écuries) sont en anglais, tels que Jolpica-F1 les publie.
+- Après la dernière course de la saison, « Prochain Grand Prix » et « Prochaine séance » indiquent la fin
+  de saison, mais les autres fonctionnalités de la prochaine course gardent les valeurs du dernier Grand
+  Prix jusqu'au calendrier suivant.
+- Une séance dont l'heure n'est pas encore annoncée est placée à midi UTC : loin de l'Europe, son jour
+  peut être décalé d'un jour jusqu'à la publication de l'heure.
 
 ## Données et crédits
 

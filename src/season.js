@@ -11,6 +11,11 @@ import { foldName } from './config.js';
 // lasts about two hours, red flags included most of the time.
 export const RACE_DURATION_MS = 3 * 60 * 60 * 1000;
 
+/** The season has a calendar (a new season may be published empty first). */
+export function hasCalendar(schedule) {
+  return Boolean(schedule?.races.length);
+}
+
 /** The next race (or the one running now), null when the season is over. */
 export function nextRace(schedule, now) {
   return schedule?.races.find((race) => race.start + RACE_DURATION_MS > now) ?? null;

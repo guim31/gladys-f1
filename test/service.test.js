@@ -249,3 +249,91 @@ test('adding the device publishes every state again, and refreshes the widget', 
   assert.equal(world.gladys.fake.states.length - before, 17);
   assert.equal(world.gladys.fake.widgetRefreshes.length, refreshes + 1);
 });
+
+test('installed before any result of the season: the first race is announced', async (t) => {
+  const api = fakeJolpica({ round: 16 });
+  const empty = {
+    MRData: { RaceTable: { season: '2026', Races: [] }, StandingsTable: { StandingsLists: [] } },
+  };
+  const fetch = api.fetch;
+  let season = 'empty';
+  api.fetch = async (url) =>
+    season === 'empty' && !url.endsWith('/current.json')
+      ? { ok: true, status: 200, json: async () => empty }
+      : fetch(url);
+  const world = await createWorld({ at: '2026-10-08T10:00:00Z', api });
+  t.after(() => world.app.stop());
+  assert.equal(world.state('last_winner'), undefined);
+  season = 'results';
+  api.round = 17;
+  await world.runUntil('2026-10-11T15:00:00Z');
+  const finished = world.gladys.fake.sceneEvents.filter((event) => event.key === 'race_finished');
+  assert.equal(finished.length, 1);
+  assert.equal(finished[0].data.winner, 'Max Verstappen');
+});
+
+test('a stale answer never takes the results back, nor fires "race finished" again', async (t) => {
+  const api = fakeJolpica({ round: 16 });
+  const world = await createWorld({ at: '2026-10-11T10:00:00Z', api });
+  t.after(() => world.app.stop());
+  api.round = 17;
+  await world.runUntil('2026-10-11T14:00:00Z');
+  api.round = 16;
+  await world.service.check();
+  assert.equal(world.state('last_winner'), 'Max Verstappen (Red Bull) · Singapore Grand Prix');
+  api.round = 17;
+  await world.service.check();
+  const finished = world.gladys.fake.sceneEvents.filter((event) => event.key === 'race_finished');
+  assert.equal(finished.length, 1);
+});
+
+test('a scene event Gladys refuses is sent again at the next tick', async (t) => {
+  const world = await createWorld({ at: '2026-10-25T19:58:00Z' });
+  t.after(() => world.app.stop());
+  const refuse = t.mock.method(world.gladys, 'publishSceneEvent', async () => {
+    throw new Error('Gladys is restarting');
+  });
+  await world.runUntil('2026-10-25T20:00:00Z');
+  refuse.mock.restore();
+  await world.runUntil('2026-10-25T20:03:00Z');
+  assert.deepEqual(
+    startingEvents(world).map((event) => event.data.minutes_before),
+    [0],
+  );
+});
+
+test('a failure to publish the device at start-up does not stop the integration', async (t) => {
+  const store = createMemoryStore();
+  const gladysDown = await createWorld({ connect: false, store });
+  t.after(() => gladysDown.app.stop());
+  let refused = 0;
+  t.mock.method(gladysDown.gladys, 'publishDiscoveredDevices', async () => {
+    refused += 1;
+    throw new Error('HTTP 503');
+  });
+  await gladysDown.gladys.connect();
+  assert.equal(refused, 1);
+  assert.equal(gladysDown.gladys.fake.connectionStatus.connected, true);
+  assert.ok(gladysDown.gladys.fake.states.length > 0);
+});
+
+test('a new season published without its calendar is not "over"', async (t) => {
+  const api = fakeJolpica();
+  const fetch = api.fetch;
+  api.fetch = async (url) =>
+    url.endsWith('/current.json')
+      ? {
+          ok: true,
+          status: 200,
+          json: async () => ({ MRData: { RaceTable: { season: '2027', Races: [] } } }),
+        }
+      : fetch(url);
+  const world = await createWorld({ api });
+  t.after(() => world.app.stop());
+  assert.equal(world.state('next_grand_prix'), undefined);
+  const ack = await world.gladys.fake.sceneAction('read_next_grand_prix', {});
+  assert.equal(
+    ack.data.outputs.sentence,
+    'Les données de Formule 1 ne sont pas encore disponibles.',
+  );
+});

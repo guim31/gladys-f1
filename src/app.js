@@ -10,7 +10,7 @@ import { CHECK_TEXT, INIT_FAILED } from './i18n.js';
 import { createJolpica } from './jolpica.js';
 import { SCENE_ACTIONS, nextRaceSummary } from './scenes.js';
 import { F1Service } from './service.js';
-import { favorites, knownDrivers, knownTeams } from './season.js';
+import { favorites, hasCalendar, knownDrivers, knownTeams } from './season.js';
 import { createStore } from './store.js';
 import { WIDGETS } from './widgets.js';
 
@@ -56,7 +56,11 @@ export function registerHandlers(gladys, options = {}) {
       await service.start(config);
     } catch (err) {
       logger.error('Initialization failed', err);
+      // The handlers keep answering, with the defaults if need be.
+      service.config ??= normalizeConfig({});
       await gladys.setConnectionStatus(false, INIT_FAILED).catch(() => {});
+      // The next status report replaces this one.
+      service.statusKey = null;
     } finally {
       resolveReady();
     }
@@ -107,7 +111,7 @@ export function checkMessage(service) {
 function checkReport(service, text, language) {
   const { data } = service;
   const lines = [];
-  if (data.schedule) {
+  if (hasCalendar(data.schedule)) {
     lines.push(text.season(data.schedule.season, data.schedule.races.length));
   }
   lines.push(text.next(nextRaceSummary(service, language).sentence));

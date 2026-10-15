@@ -6,7 +6,7 @@
 // -----------------------------------------------------------------------------
 
 import { SENTENCES } from './i18n.js';
-import { countryName, nextRace, raceRunning, sessionOf } from './season.js';
+import { countryName, hasCalendar, nextRace, raceRunning, sessionOf } from './season.js';
 import { daysBetween, formatDay, formatTime, localDate } from './time.js';
 
 export const STANDINGS_KINDS = ['drivers', 'constructors'];
@@ -19,7 +19,7 @@ export function nextRaceSummary(service, language = service.config.language) {
   const { timeZone } = service;
   const sentences = SENTENCES[language];
   const schedule = service.data.schedule;
-  if (!schedule) {
+  if (!hasCalendar(schedule)) {
     return { sentence: sentences.noData, race: null, days: -1, start: '' };
   }
   const race = nextRace(schedule, now);
