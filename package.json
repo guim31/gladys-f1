@@ -1,6 +1,6 @@
 {
   "name": "gladys-f1",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "Formula 1 for Gladys Assistant: next Grand Prix, sessions, standings and results from Jolpica-F1.",
   "type": "module",
